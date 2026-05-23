@@ -2,6 +2,14 @@
 # https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/os-specific/linux/firmware/raspberrypi/default.nix
 [
   {
+    # https://github.com/raspberrypi/firmware/releases/tag/1.20260521
+    # extra/git_hash: e165a3e0c5c6729d077c30c6d720c029d688d99d (rpi-6.18.y)
+    version = "1.20260521";
+    tag = "1.20260521";
+    # TODO: fill in after first build
+    srcHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+  }
+  {
     # https://github.com/raspberrypi/firmware/releases/tag/1.20260408
     version = "1.20260408";
     tag = "1.20260408";

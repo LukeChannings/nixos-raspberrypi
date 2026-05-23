@@ -50,6 +50,11 @@ final: prev: {
 
     { latest = final.linuxAndFirmware.v6_12_87; }
 
+    (mkBundle final "v6_18_32" {
+      fw = final.raspberrypifw_20260521;
+      wFw = final.raspberrypiWirelessFirmware_20251008;
+    })
+
     (mkBundle final "v6_12_87" {
       fw = final.raspberrypifw_20260408;
       wFw = final.raspberrypiWirelessFirmware_20251008;

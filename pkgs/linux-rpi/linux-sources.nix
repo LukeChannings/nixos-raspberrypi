@@ -1,5 +1,12 @@
 [
   {
+    # rpi-6.18.y branch HEAD, 2026-05-22
+    modDirVersion = "6.18.32";
+    tag = "unstable_20260522";
+    rev = "bb5a64adb1b761406d0e3b6570c3d2668e9198f8"; # 6.18.32
+    srcHash = "sha256-rpWHYPW4JotPczjB8ENzX0m+IypHX24N3GTK8s8d1dM=";
+  }
+  {
     modDirVersion = "6.12.87";
     tag = "unstable_20260509";
     rev = "ae4d75fb36deba0fe1a986d9bfae65755e082dd0"; # 6.12.87
