@@ -1,38 +1,10 @@
 [
   {
-    modDirVersion = "6.18.59";
-    tag = "unstable_20261026";
-    rev = "9b488bc7a1e9b61713082f3e6c4361988d62f77b";
-    srcHash = "sha256-gG3qRFOJzrDH7vXWGgeWYyYupaxwmeZzqh47NursKLs=";
-  }
-  {
-    modDirVersion = "6.18.52";
-    tag = "unstable_20260915";
-    rev = "4bb240615790ea5bd939484f4595b6952ac94ef4";
-    srcHash = "sha256-aI1Rqihe3nV3th2/gEKS4Y1A9AClT9l5688WROiVRrM=";
-  }
-  {
-    modDirVersion = "6.18.42";
-    tag = "unstable_20260806";
-    rev = "8c0da7c3bb97a2e0aaa0d405d3052786c1469b35";
-    srcHash = "sha256-CMjVylJFgiX9TRQ+drFr/OicaKp0W7r0idIKdMSIuGA=";
-  }
-  {
-    # https://github.com/raspberrypi/linux/releases/tag/stable_20260724
-    modDirVersion = "6.18.39";
-    tag = "stable_20260724";
-    srcHash = "sha256-IT/SkF458oLmnFIPbN76Qp6s8KVxKQOC02XmN7NRdBc=";
-  }
-  {
-    modDirVersion = "6.18.34";
-    tag = "stable_20260609";
-    srcHash = "sha256-ok++36dh9o4e7AC5RErW00/r23rGxufe0PYXz5Dzy5U=";
-  }
-  {
-    # https://github.com/raspberrypi/linux/releases/tag/stable_20260527
-    modDirVersion = "6.18.33";
-    tag = "stable_20260527";
-    srcHash = "sha256-XGL2SgPws+c1yAZDmNC9jQdi23qQPZKucQUr9+eD8MM=";
+    # rpi-6.18.y branch HEAD, 2026-05-22
+    modDirVersion = "6.18.32";
+    tag = "unstable_20260522";
+    rev = "bb5a64adb1b761406d0e3b6570c3d2668e9198f8"; # 6.18.32
+    srcHash = "sha256-rpWHYPW4JotPczjB8ENzX0m+IypHX24N3GTK8s8d1dM=";
   }
   {
     modDirVersion = "6.12.87";
