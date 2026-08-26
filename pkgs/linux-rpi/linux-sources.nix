@@ -1,5 +1,35 @@
 [
   {
+    # rpi-7.2.y branch HEAD, 2026-08-17
+    modDirVersion = "7.2.0";
+    tag = "unstable_20260817";
+    rev = "48599d5d6403fd9680b2f5582a7b7b17a0c9d018"; # 7.2.0
+    srcHash = "sha256-C4gDkq6TIl4crX2pv26C+dc4ta/y3OU6n7pUx0jypCo=";
+  }
+  {
+    modDirVersion = "6.18.42";
+    tag = "unstable_20260806";
+    rev = "8c0da7c3bb97a2e0aaa0d405d3052786c1469b35";
+    srcHash = "sha256-CMjVylJFgiX9TRQ+drFr/OicaKp0W7r0idIKdMSIuGA=";
+  }
+  {
+    # https://github.com/raspberrypi/linux/releases/tag/stable_20260724
+    modDirVersion = "6.18.39";
+    tag = "stable_20260724";
+    srcHash = "sha256-IT/SkF458oLmnFIPbN76Qp6s8KVxKQOC02XmN7NRdBc=";
+  }
+  {
+    modDirVersion = "6.18.34";
+    tag = "stable_20260609";
+    srcHash = "sha256-ok++36dh9o4e7AC5RErW00/r23rGxufe0PYXz5Dzy5U=";
+  }
+  {
+    # https://github.com/raspberrypi/linux/releases/tag/stable_20260527
+    modDirVersion = "6.18.33";
+    tag = "stable_20260527";
+    srcHash = "sha256-XGL2SgPws+c1yAZDmNC9jQdi23qQPZKucQUr9+eD8MM=";
+  }
+  {
     # rpi-6.18.y branch HEAD, 2026-05-22
     modDirVersion = "6.18.32";
     tag = "unstable_20260522";
