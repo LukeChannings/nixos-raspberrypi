@@ -48,7 +48,14 @@ final: prev: {
 
     { default = final.linuxAndFirmware.v6_18_42; }
 
-    { latest = final.linuxAndFirmware.v6_18_42; }
+    # Fork-owned alias: hartlandia's CM4/CM5 blades track `latest`, which is
+    # ahead of upstream's. Merges from nvmd must not regress it.
+    { latest = final.linuxAndFirmware.v7_2_0; }
+
+    (mkBundle final "v7_2_0" {
+      fw = final.raspberrypifw_20260824;
+      wFw = final.raspberrypiWirelessFirmware_20260321;
+    })
 
     (mkBundle final "v6_18_42" {
       fw = final.raspberrypifw_20260806;

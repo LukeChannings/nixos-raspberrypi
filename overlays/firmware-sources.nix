@@ -2,6 +2,15 @@
 # https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/os-specific/linux/firmware/raspberrypi/default.nix
 [
   {
+    # https://github.com/raspberrypi/firmware/releases/tag/1.20260824
+    # `extra/git_hash` is 16f1da3c (rpi-6.18.y, 6.18.46): the vendor has cut no
+    # firmware release paired with rpi-7.2.y, so the newest release is the
+    # closest match for the v7_2_0 bundle.
+    version = "1.20260824";
+    tag = "1.20260824";
+    srcHash = "sha256-Pm45K7o7LO1zZ8zfdl/9iGZGlu2byMMnRlUwIaXChYU=";
+  }
+  {
     # this release is untagged in the upstream
     # matches unstable kernel `raspberrypi/linux` 6.18.42
     version = "0-unstable-20260806";

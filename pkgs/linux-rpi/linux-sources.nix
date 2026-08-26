@@ -1,5 +1,12 @@
 [
   {
+    # rpi-7.2.y branch HEAD, 2026-08-17
+    modDirVersion = "7.2.0";
+    tag = "unstable_20260817";
+    rev = "48599d5d6403fd9680b2f5582a7b7b17a0c9d018"; # 7.2.0
+    srcHash = "sha256-C4gDkq6TIl4crX2pv26C+dc4ta/y3OU6n7pUx0jypCo=";
+  }
+  {
     modDirVersion = "6.18.42";
     tag = "unstable_20260806";
     rev = "8c0da7c3bb97a2e0aaa0d405d3052786c1469b35";
