@@ -4,7 +4,7 @@
     modDirVersion = "7.2.0";
     tag = "unstable_20260817";
     rev = "48599d5d6403fd9680b2f5582a7b7b17a0c9d018"; # 7.2.0
-    srcHash = "sha256-C4gDkq6TIl4crX2pv26C+dc4ta/y3OU6n7pUx0jypCo=";
+    srcHash = "sha256-rBR1UMSicc7QyRcaBK9i5jqt1/EgorpWaBWeTJYfcY8=";
   }
   {
     modDirVersion = "6.18.42";
