@@ -73,6 +73,12 @@ prev.lib.mergeAttrsList (
       "4"
       "5"
     ])
+    (mkLinuxFor final "6_18_52" [
+      "02"
+      "3"
+      "4"
+      "5"
+    ])
     (mkLinuxFor final "6_18_42" [
       "02"
       "3"
