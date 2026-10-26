@@ -50,9 +50,9 @@ final: prev: {
 
     # Fork-owned alias: hartlandia's CM4/CM5 blades track `latest`, which is
     # ahead of upstream's. Merges from nvmd must not regress it.
-    { latest = final.linuxAndFirmware.v7_2_0; }
+    { latest = final.linuxAndFirmware.v7_2_12; }
 
-    (mkBundle final "v7_2_0" {
+    (mkBundle final "v7_2_12" {
       fw = final.raspberrypifw_20260824;
       wFw = final.raspberrypiWirelessFirmware_20260321;
     })

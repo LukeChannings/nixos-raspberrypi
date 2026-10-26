@@ -67,7 +67,7 @@ in
 final: prev:
 prev.lib.mergeAttrsList (
   builtins.concatLists [
-    (mkLinuxFor final "7_2_0" [
+    (mkLinuxFor final "7_2_12" [
       "02"
       "3"
       "4"

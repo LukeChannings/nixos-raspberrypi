@@ -1,10 +1,14 @@
 [
   {
-    # rpi-7.2.y branch HEAD, 2026-08-17
-    modDirVersion = "7.2.0";
-    tag = "unstable_20260817";
-    rev = "48599d5d6403fd9680b2f5582a7b7b17a0c9d018"; # 7.2.0
-    srcHash = "sha256-rBR1UMSicc7QyRcaBK9i5jqt1/EgorpWaBWeTJYfcY8=";
+    # rpi-7.2.y branch HEAD, 2026-10-25
+    # NOTE: srcHash must be computed on a case-sensitive filesystem.
+    # raspberrypi/linux carries case-colliding headers (e.g. netfilter
+    # xt_CONNMARK.h vs xt_connmark.h); a macOS unpack silently drops the
+    # uppercase partners and yields a hash that fails on every Linux builder.
+    modDirVersion = "7.2.12";
+    tag = "unstable_20261025";
+    rev = "ce7147911b8d523c46726045ff2f7adf85bc9cb8"; # 7.2.12
+    srcHash = "sha256-zkn5FPBCRy/gqPfUOa7JgEHc16ylqymHNbOgqfJTSNA=";
   }
   {
     modDirVersion = "6.18.42";
