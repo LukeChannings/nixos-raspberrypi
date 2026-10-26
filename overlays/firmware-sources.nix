@@ -2,13 +2,20 @@
 # https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/os-specific/linux/firmware/raspberrypi/default.nix
 [
   {
+    # firmware master HEAD, 2026-10-21. Untagged upstream: the newest tag is
+    # 1.20260915, which points at 6f0881cb (2026-09-14) and so predates this.
+    # `extra/git_hash` is 7bc8e3eb (rpi-6.18.y, 6.18.58): the vendor still has
+    # cut no firmware release paired with rpi-7.2.y, so the newest firmware
+    # remains the closest match for the v7_2_12 bundle.
+    version = "0-unstable-20261021";
+    rev = "88a0ae8876e800801ee5c27624138b3d02a21c63";
+    srcHash = "sha256-VB9j2So7zbc90MXG8UoDNSdb/1j4zuc2E7GATT/Yf4U=";
+  }
+  {
     # https://github.com/raspberrypi/firmware/releases/tag/1.20260824
-    # `extra/git_hash` is 16f1da3c (rpi-6.18.y, 6.18.46): the vendor has cut no
-    # firmware release paired with rpi-7.2.y, so this is the closest match for
-    # the v7_2_12 bundle.
-    # NOTE: 1.20260915 now exists and is newer; the v7_2_12 bundle stays pinned
-    # here deliberately rather than tracking it. Revisit when the vendor cuts a
-    # firmware release actually paired with rpi-7.2.y.
+    # `extra/git_hash` is 16f1da3c (rpi-6.18.y, 6.18.46). Previously carried the
+    # v7_2_0 bundle; now unreferenced by any bundle, retained so consumers
+    # pinning `raspberrypifw_20260824` keep working.
     version = "1.20260824";
     tag = "1.20260824";
     srcHash = "sha256-Pm45K7o7LO1zZ8zfdl/9iGZGlu2byMMnRlUwIaXChYU=";
