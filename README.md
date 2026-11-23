@@ -1,270 +1,308 @@
 # nixos-raspberrypi
 
-Unopinionated Nix flake for infrastructure, vendor packages, kernel, and some optimized third-party packages for [NixOS](https://nixos.org/) running on Raspberry Pi devices.
+Raspberry Pi support for [NixOS](https://nixos.org/): bootloader and firmware
+infrastructure, vendor kernels, and the Compute Module profiles the hartlandia
+blades run.
 
-It will let you deploy [NixOS](https://nixos.org/) fully declaratively in one step with tools like [nixos-anywhere](https://github.com/nix-community/nixos-anywhere/) (note: `kexec` is, unfortunately, not supported)
+A fork of [nvmd/nixos-raspberrypi](https://github.com/nvmd/nixos-raspberrypi),
+narrowed to what this fleet uses and made self-contained: the kernel versions
+are decided here, built here, and cached here. Nothing waits on an upstream
+release or an upstream cache.
 
-## Provides bootloader infrastructure
+## What this repository publishes
 
-Manages Raspberry Pi firmware partition `/boot/firmware` (the path is configurable with `boot.loader.raspberry-pi.firmwarePath`).
+Two things, and everything else is the machinery that produces them:
 
-Partition provisioning is integrated with bootloader activation scripts, happening on NixOS generation switch, enabling to use deployment tools like `nixos-anywhere` without any interactive intervention.
+| | |
+|---|---|
+| **a kernel** | the vendor kernel (`raspberrypi/linux`) with the firmware revisions it was built against, for CM4 (bcm2711) and CM5 (bcm2712) |
+| **a profile** | `nixosModules.profiles.{cm4,cm4-zfs,cm5,cm5-zfs}` — a Compute Module pinned to one of those kernels |
 
-Supported boot methods (configurable with `boot.loader.raspberry-pi.bootloader`):
-- `kernelboot` (legacy), default for RPi5
-- `uboot`, default bootloader for all other boards
-- `kernel`, new generation of `kernelboot`, supporting multiple NixOS generations (see [#60](https://github.com/nvmd/nixos-raspberrypi/issues/60), default for RPi5 sd-image/installer images, _recommended_ for new installations.
+Both are built on every push to `main` and pushed to
+[`nix.channings.me`](https://nix.channings.me), kernels first so that the
+profile closures substitute them rather than building a second copy. A blade
+importing a profile builds nothing.
 
+The push includes **every output of the kernel, not just `out`** — in
+particular `dev`, the configured build tree that out-of-tree modules compile
+against. Without it a cached kernel is a trap: ZFS, or any other kernel
+module, would rebuild the whole kernel to get at a build tree that already
+exists. The derivations go up too, so the cache carries how a kernel was built
+and not only what came out of it.
 
-## Provides vendor kernel packages with matched firmware
+## Two kernels: `latest` and `zfs`
 
-`pkgs.linuxAndFirmware.default` contains compatible:
-```nix
-linuxPackages_rpi<board model>  # Linux kernel
-raspberrypifw                   # Raspberry firmware, device trees (DTBs), device overlays
-raspberrypiWirelessFirmware     # wireless firmware
+`pkgs/linux-rpi/linux-sources.nix` lists the vendor kernels this fork tracks,
+newest first. Two aliases sit on top of it
+(`overlays/linux-and-firmware.nix`):
+
+- **`latest`** — the newest tracked kernel. What `cm4` and `cm5` run, and what
+  `pkgs.linux_rpi5` and friends resolve to.
+- **`zfs`** — the newest tracked kernel OpenZFS still supports. What `cm4-zfs`
+  and `cm5-zfs` run.
+
+`zfs` is computed, not pinned. OpenZFS declares the kernel range it builds
+against, nixpkgs surfaces that as `meta.broken` on the kernel module, and the
+alias walks the tracked versions newest-first and takes the first one that
+isn't broken. So while OpenZFS keeps up with the vendor kernel, `zfs` ==
+`latest` and the ZFS profiles cost no extra build; when the vendor jumps
+ahead, the alias falls back a rung on its own. Nobody has to notice and edit a
+pin, and `just test` fails loudly if no tracked kernel is supported at all.
+
+Today both aliases are the same kernel:
+
+```console
+$ nix-instantiate --eval -A packages.aarch64-linux.linux_rpi5.version
+"7.2.12-unstable_20261025"
 ```
 
-Latest stable version compatible with the board is selected in the flake module by default.
-
-## Provides 3rd-party optimised packages
-
-overlays, containing vendor, and optimized packages, like `libcamera`, `ffmpeg`, etc.
-
-# Usage
-
-## Adding flake input
+## Using it
 
 ```nix
-inputs = {
-  # follow `main` branch of this repository, considered being stable
-  nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
-};
+{
+  inputs.nixos-raspberrypi.url = "git+https://forge.channings.me/hartlandia/nixos-raspberrypi.git";
 
-# Optional: Binary cache for the flake
-nixConfig = {
-  extra-substituters = [
-    "https://nixos-raspberrypi.cachix.org"
-  ];
-  extra-trusted-public-keys = [
-    "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
-  ];
-};
+  # Optional, and worth it: this is where the kernels live.
+  nixConfig = {
+    extra-substituters = [ "https://nix.channings.me" ];
+    extra-trusted-public-keys = [
+      "garage:JZet/fsItH8cJ6SKLci1+BuMIQGDfZSa/8GxGpKcxss="
+    ];
+  };
+}
 ```
 
-## Using the flake to create NixOS configuration
-
-There're helper functions intended to be used as a drop-in replacement for
-`nixpkgs.lib.nixosSystem`:
-
-- `nixos-raspberrypi.lib.nixosSystem`
-- `nixos-raspberrypi.lib.nixosSystemFull` - same as above, but with RPi-optimized overlays applied globally, this may lead to more rebuilds
-- `nixos-raspberrypi.lib.nixosInstaller` - same as `nixosSystemFull` but with additional installer-specific modules
-
-All of them take the following additional optional arguments:
-
-- `nixpkgs` – default = nixpkgs of the `nixos-raspberrypi` will be used
-- `trustCaches` – default=true, trust binary caches of `nixos-raspberrypi`
+A blade is then the profile plus the machine:
 
 ```nix
-nixosConfigurations.rpi5-demo = nixos-raspberrypi.lib.nixosSystem {
-  specialArgs = inputs;
+nixosConfigurations.blade-01 = nixos-raspberrypi.lib.nixosSystem {
   modules = [
+    nixos-raspberrypi.nixosModules.profiles.cm5-zfs
+
     {
-      # Hardware specific configuration, see section below for a more complete
-      # list of modules
-      imports = with nixos-raspberrypi.nixosModules; [
-        raspberry-pi-5.base
-        raspberry-pi-5.display-vc4
-        raspberry-pi-5.bluetooth
-      ];
+      networking.hostName = "blade-01";
+      # ZFS needs one, and it must be unique per machine.
+      networking.hostId = "...";
+
+      fileSystems = { /* ... */ };
+      system.stateVersion = "26.05";
     }
-
-    ({ config, pkgs, lib, ... }: {
-      networking.hostName = "rpi5-demo";
-
-      system.nixos.tags = let
-        cfg = config.boot.loader.raspberry-pi;
-      in [
-        "raspberry-pi-${cfg.variant}"
-        cfg.bootloader
-        config.boot.kernelPackages.kernel.version
-      ];
-    })
-
-    # ...
-
   ];
 };
 ```
 
-See also: <https://github.com/nvmd/nixos-raspberrypi-demo>, [Installers and examples](#installer-configurations-and-configuration-examples).
+`lib.nixosSystem` passes the flake to the modules and trusts the caches above;
+see "Advanced usage" for doing it by hand. `profiles/reference-system.nix` is
+the smallest complete example — it is also what CI builds.
 
-## Choosing modules corresponding to your hardware
+### What a profile sets
 
-See `flake.nix`, `nixosModules` for a full list of configuration modules for your hardware.
-Here is the list of the most important:
+- the board's base module (`raspberry-pi-4.base` / `raspberry-pi-5.base`)
+- `boot.kernelPackages` and the firmware packages, from its kernel bundle, at
+  priority 900 — stronger than the board module's `mkDefault`, weaker than an
+  ordinary definition, so you can still override it without `mkForce`
+- on CM5, `boot.loader.raspberry-pi.bootloader = "kernel"`: the board default
+  (`kernelboot`) is deprecated here, and `kernel` keeps a generation list in
+  the firmware partition, so a bad rebuild on a headless blade is a rollback
+  instead of a trip to the rack. **CM4 is left on `uboot`**, which is not
+  deprecated — a kernel profile has no business switching a booting machine's
+  bootloader uninvited.
+- on the `-zfs` profiles, `boot.supportedFilesystems.zfs` and
+  `boot.zfs.forceImportRoot = false` (the 26.11 default, taken early)
+
+Deliberately **not** set: `networking.hostId`, filesystems, users — profiles
+describe the blade, not the deployment. Nor 16K pages on CM5
+(`raspberry-pi-5.page-size-16k`): that is a different kernel build, so
+importing it is an hour of compiling and a guaranteed cache miss.
+
+### Other hardware
+
+Board support beyond CM4/CM5 is kept from upstream but is neither built nor
+cached here — expect to compile:
 
 ```nix
 imports = with nixos-raspberrypi.nixosModules; [
-  # Base board support modules
   raspberry-pi-02.base
   raspberry-pi-3.base
   raspberry-pi-4.base
   raspberry-pi-5.base
 
-  # (Potentially) All boards
-  usb-gadget-ethernet # Configures USB Gadget/Ethernet - Ethernet emulation over USB
+  usb-gadget-ethernet      # Ethernet emulation over USB
 
-  # RPi4:
-  # import this if you have the display, on rpi4 this is the only display configuration option
-  raspberry-pi-4.display-vc4
+  raspberry-pi-4.display-vc4   # RPi4: the only display option
 
-  # RPi5:
-  raspberry-pi-5.page-size-16k  # Optional memory optimization: use 16k pages instead of default 64k for jemalloc, saves memory, reduces fragmentation. May fix any issues caused by the memory page size discrepancy. May cause lots of rebuilds. (only for systems running default rpi5 (bcm2712) kernel with 16k memory page)
-  # use one of following for the "PrimaryGPU" configuration:
-  raspberry-pi-5.display-vc4  # "regular" display connected
-  raspberry-pi-5.display-rp1  # for RP1-connected (DPI/composite/MIPI DSI) display
+  # RPi5: one of these for the "PrimaryGPU" configuration
+  raspberry-pi-5.display-vc4   # "regular" display connected
+  raspberry-pi-5.display-rp1   # RP1-connected (DPI/composite/MIPI DSI)
+  raspberry-pi-5.page-size-16k # 16k pages (rebuilds the kernel)
 ];
 ```
 
-## Configure the bootloader and firmware (`config.txt`)
+## Bootloader infrastructure
 
-Sane default configuration is provided by the base module for a corresponding Raspberry board, but further configuration is, of course, possible:
+Manages the Raspberry Pi firmware partition `/boot/firmware` (the path is
+configurable with `boot.loader.raspberry-pi.firmwarePath`).
 
-Configuration options for the bootloader are in `boot.loader.raspberry-pi` (defined in `modules/system/boot/loader/raspberrypi/default.nix`).
+Partition provisioning is integrated with bootloader activation scripts,
+happening on NixOS generation switch, which is what lets deployment tools like
+[nixos-anywhere](https://github.com/nix-community/nixos-anywhere/) work
+without interactive intervention (`kexec` is, unfortunately, not supported).
 
-Raspberry's `config.txt` can be configured with `hardware.raspberry-pi.config` options, see `modules/configtxt.nix` as an example (this is the default configuration as provided by RaspberryPi OS, but translated to nix format).
+Supported boot methods (`boot.loader.raspberry-pi.bootloader`):
 
-## Options for advanced usage
+- `kernel` — new generation of `kernelboot`, supporting multiple NixOS
+  generations (see [#60](https://github.com/nvmd/nixos-raspberrypi/issues/60));
+  what the CM5 profiles use and what is _recommended_ for new installations
+- `uboot` — board default for everything other than RPi5
+- `kernelboot` (legacy) — board default for RPi5, deprecated
 
-Options for a more fine-grained control:
+Raspberry's `config.txt` is configured with `hardware.raspberry-pi.config`
+options; see `modules/configtxt.nix` for the defaults, translated from
+Raspberry Pi OS. Bootloader options live in `boot.loader.raspberry-pi`
+(`modules/system/boot/loader/raspberrypi/default.nix`).
 
-- see implementation details in `lib/default.nix`, `lib/internal.nix`
-- Use `nixos-raspberrypi.lib.int.nixosSystemRPi` instead of `nixos-raspberrypi.lib.nixosSystem`
-- Use regular `nixpkgs.lib.nixosSystem` importing the modules manually, see
-below
+## Installer images
+
+SD card images for RPi4 and RPi5, based on
+[nixos-images](https://github.com/nix-community/nixos-images): mDNS enabled,
+`iwd` for easier wlan configuration, and a partition table that expands to
+fill the card on first boot, so an image doubles as a ready-to-use system.
+
+```sh
+just build installer-rpi5
+```
+
+They are built weekly (and on demand) by the Installer images workflow, which
+keeps them as artefacts rather than pushing them to the cache: multi-gigabyte,
+single-use, and nothing substitutes from them. Randomly generated connection
+credentials are displayed on screen once the system boots.
+
+## Development
+
+Vanilla `nix-build` / `nix-shell`, never `nix build` / `nix develop`: the
+flake exists to pin inputs, and flake commands copy the whole source tree to
+the store on every invocation.
+
+```sh
+just            # list recipes
+just test       # evaluate every profile, installer and published package
+just lint       # treefmt over the working tree (nix, yaml, workflows)
+just format     # same, writing changes
+just build linux_rpi5   # needs an aarch64 builder: native, remote or binfmt
+```
+
+`just test` is cheap and catches what matters: a kernel takes the better part
+of an hour and an image tens of gigabytes, but *evaluating* them takes seconds
+and is what notices a profile that no longer builds or a bundle whose kernel
+and firmware no longer line up.
+
+Everything published is `aarch64-linux`, so `packages` is empty on an x86_64
+workstation and `just build` there needs emulation or a remote builder. CI
+builds natively on arm runners instead.
+
+| workflow | where | what |
+|---|---|---|
+| Lint, Test | Forgejo + GitHub | `just lint`, `just test` |
+| Build | GitHub (`ubuntu-24.04-arm`) | kernels, then profile closures → `nix.channings.me` |
+| Installer images | GitHub (`ubuntu-24.04-arm`) | sd-images as artefacts, weekly |
+| Update flake.lock | GitHub | weekly PR |
+
+Build lives on GitHub because its arm64 runners are what make a native
+aarch64 kernel build free.
+
+### Adding a kernel version
+
+1. add it to `pkgs/linux-rpi/linux-sources.nix`, newest first
+2. add the firmware it pairs with to `overlays/firmware-sources.nix` — match
+   `extra/git_hash` in the firmware tree against the kernel's rev
+3. pair the two in `overlays/linux-and-firmware.nix`
+4. `just test`
+
+The `zfs` alias re-resolves by itself. A version can only be *removed* once
+nothing below it is needed as a rung of that ladder.
+
+## Advanced usage
+
+Finer-grained control, for consumers that don't want `lib.nixosSystem`:
+
+- implementation details in `lib/default.nix`, `lib/internal.nix`
+- `nixos-raspberrypi.lib.int.nixosSystemRPi` instead of
+  `nixos-raspberrypi.lib.nixosSystem`
+- or plain `nixpkgs.lib.nixosSystem`, importing the modules by hand:
 
 > [!IMPORTANT]
-> When using `nixpkgs.lib.nixosSystem` directly you **must** pass
-> `nixos-raspberrypi` in `specialArgs` so that board modules can find the
-> flake reference:
+> With `nixpkgs.lib.nixosSystem` directly you **must** pass
+> `nixos-raspberrypi` in `specialArgs`, so that board modules and profiles can
+> find the flake:
+>
 > ```nix
 > nixpkgs.lib.nixosSystem {
 >   specialArgs = { inherit (inputs) nixos-raspberrypi; };
 >   modules = [ ... ];
 > };
 > ```
+>
 > The `nixos-raspberrypi.lib.nixosSystem` helpers do this automatically.
 
 ```nix
 imports = with nixos-raspberrypi.nixosModules; [
-
-  # Required: Add necessary overlays with kernel, firmware, vendor packages
+  # Required: overlays with kernel, firmware, vendor packages
   nixos-raspberrypi.lib.inject-overlays
 
-  # Binary cache with prebuilt packages for the currently locked `nixpkgs`,
-  # see `devshells/nix-build-to-cachix.nix` for a list
+  # The binary caches this flake's artefacts come from
   trusted-nix-caches
 
-  # Optional: All RPi and RPi-optimised packages to be available in `pkgs.rpi`
+  # Optional: all RPi and RPi-optimised packages available as `pkgs.rpi`
   nixpkgs-rpi
 
-  # Optional: add overlays with optimised packages into the global scope
-  # provides: ffmpeg_{4,6,7}, kodi, libcamera, vlc, etc.
-  # This overlay may cause lots of rebuilds (however many
-  #  packages should be available from the binary cache)
+  # Optional: optimised packages in the global scope — ffmpeg, kodi,
+  # libcamera, vlc, etc. Causes lots of rebuilds, and these are *not* in the
+  # cache: only kernels, firmware and profile closures are.
   nixos-raspberrypi.lib.inject-overlays-global
 ];
 ```
 
-# Installer configurations
+Individual packages can be taken from `packages.aarch64-linux` (the published,
+cached set) or from `legacyPackages.aarch64-linux` (the whole RPi world, with
+every overlay applied and nothing promised about the cache).
 
-The flake provides installation SD card images for Raspberry Pi Zero2, 3, 4, and 5, based on <https://github.com/nix-community/nixos-images>. They have several advantages over the "standard" ones, making the installation more user-friendly: mDNS enabled, `iwd` for easier wlan configuration, etc.
+## Deployment
 
-Note: these images are mutable, i.e. they're suitable to be used both as an installation media, and as a ready to use system on the sd-card. The partition table will be expanded to use all the available space during the first boot.
-This can helpful for boards with a single storage device option, like RPi Zero/Zero 2.
-
-> [!TIP]
-> installer images use new generational bootloader for RPi5 by default (see #60),
-> to keep that in your configuration, set `boot.loader.raspberry-pi.bootloader = "kernel"`.
-> This is _recommended_ for new installations.
-
-See `nixosConfigurations.rpi{02,4,5}-installer` in `flake.nix`.
-
-SD image can be built with:
-
-```
-# By accepting the flake configuration, you can trust our binary cache and 
-# avoid building the kernel package yourself.
-nix --accept-flake-config build .#installerImages.rpi02
-nix --accept-flake-config build .#installerImages.rpi3
-nix --accept-flake-config build .#installerImages.rpi4
-nix --accept-flake-config build .#installerImages.rpi5
-```
-
-Randomly generated connection credentials will be displayed on the screen, once the system is booted.
-
-Network access to Raspberry Pi Zero2 (RPi02) boards is also possible via USB Gadget/Ethernet functionality.
-
-> [!TIP]
-> You can optionally replace `# YOUR SSH PUB KEY HERE #` in `custom-user-config`
-> with your SSH public key to generate the image with your SSH key already baked in
-
-`.#nixosConfigurations.rpi{02,4,5}-installer.config.system.build.toplevel` are included in the binary cache.
-
-# NixOS configuration examples
-
-Sophisticated demo configurations are available in <https://github.com/nvmd/nixos-raspberrypi-demo>.
-
-Installer configurations can also double as the configuration examples.
-
-# Deployment
-
-for example, with `nixos-anywhere` to the system running installer image (will use [disko](https://github.com/nix-community/disko/) to set the disks up):
+With `nixos-anywhere`, to a system running the installer image (uses
+[disko](https://github.com/nix-community/disko/) to set the disks up):
 
 ```shell
-nixos-anywhere --flake .#<system> root@<hostname>"
+nixos-anywhere --flake .#<system> root@<hostname>
 ```
 
-or, to an already running system (to change configuration of it):
+or to an already running system:
 
 ```shell
 nixos-rebuild switch --flake .#<system> --target-host root@<hostname>
 ```
 
-# Alternative ways to get individual packages
+## Design goals
 
-An alternative ways to consume individual packages without overlays are:
-
-- to get it directly from the flake, it will based on stable `nixpkgs` _without_ any of other optimisations transitively applied (i.e. only this particular package is optimised):
-
-```nix
-  environment.systemPackages = [
-    nixos-raspberrypi.packages.aarch64-linux.vlc
-  ];
-```
-
-- to get it from `nixos-raspberrypi.legacyPackages.<system>`. Here all overlays are applied.
-
-# Design goals
-
-This is basically [`boot.loader.raspberryPi` options](https://search.nixos.org/options?channel=unstable&show=boot.loader.raspberryPi), which are deprecated in nixpkgs, but updated and improved upon.
-
-Design objectives:
+This is essentially
+[`boot.loader.raspberryPi`](https://search.nixos.org/options?channel=unstable&show=boot.loader.raspberryPi),
+deprecated in nixpkgs, updated and improved upon:
 
 - individually consumable modules and overlays for specific functions
-- reuse of the existing nixos/nixpkgs infrastructure and idiomatic approaches to the maximum extent possible
-- integration with the existing nixos system activation
+- reuse of existing nixos/nixpkgs infrastructure and idiomatic approaches to
+  the maximum extent possible
+- integration with existing nixos system activation
 
-## Historical background
+Upstream keeps this deliberately unopinionated. This fork adds exactly one
+opinion on top — the profiles — and keeps the rest of the machinery general.
 
-This project grew naturally out of the need to configure and extend rather great [tstat's raspberry pi support repository](https://github.com/tstat/raspberry-pi-nix), which we used for some time.
+### Historical background
 
-Unfortunately it was virtually impossible to work with it without reengineering the whole thing, so this Flake was born. Inability to use it non-interactively with `nixos-anywhere` was the biggest concern.
+Upstream grew out of the need to configure and extend
+[tstat's raspberry-pi-nix](https://github.com/tstat/raspberry-pi-nix), which
+proved virtually impossible to work with without reengineering the whole
+thing; inability to use it non-interactively with `nixos-anywhere` was the
+biggest concern. The `config.txt` generation module is still an adapted fork
+of it.
 
-We found [`boot.loader.raspberryPi` options](https://search.nixos.org/options?channel=unstable&show=boot.loader.raspberryPi) to be much more idiomatic, easier to extend, and maintain.
-
-This flake strives to keep and improve those properties by keeping it as unopinionated as possible and modular (see [above](#design-goals))
-
-We're still using some of the modules provided by an adapted fork of tstat/raspberry-pi-nix, namely `config.txt` generation module.
+Demo configurations for upstream are available at
+<https://github.com/nvmd/nixos-raspberrypi-demo>.
