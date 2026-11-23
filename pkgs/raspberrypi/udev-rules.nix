@@ -8,7 +8,7 @@
   withCpuGovernorConfig ? false,
 }:
 
-stdenvNoCC.mkDerivation (finalAttrs: {
+stdenvNoCC.mkDerivation (_finalAttrs: {
   pname = "raspberrypi-udev-rules";
   version = "20260202";
 

@@ -1,4 +1,4 @@
-final: prev: {
+_final: prev: {
   # see also
   # https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/misc/uboot/default.nix#L494
   # https://source.denx.de/u-boot/u-boot

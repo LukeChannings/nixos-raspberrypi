@@ -1,9 +1,9 @@
-final: prev: {
+_final: prev: {
   # Fixes the issue https://github.com/nvmd/nixos-raspberrypi/issues/48
 
   # This overlay is to be removed once https://github.com/NixOS/nixpkgs/pull/429288
   # is upstreamed
-  libpisp = prev.libpisp.overrideAttrs (old: {
+  libpisp = prev.libpisp.overrideAttrs (_old: {
     preFixup = ''
       so=$out/lib/libpisp.so.1
       patchelf --set-soname $so $so

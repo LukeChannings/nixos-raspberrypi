@@ -1,7 +1,5 @@
 { argononed }:
 {
-  config,
-  pkgs,
   lib,
   ...
 }:

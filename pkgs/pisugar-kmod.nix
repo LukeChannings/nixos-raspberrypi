@@ -3,7 +3,6 @@
   lib,
   fetchFromGitHub,
   kernel,
-  kmod,
   pisugarVersion,
 }:
 

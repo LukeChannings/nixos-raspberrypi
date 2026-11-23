@@ -38,7 +38,7 @@ let
 
     };
 
-  bootloader = (
+  bootloader =
     {
       pkgs,
       nixosGenerationsDir,
@@ -61,10 +61,9 @@ let
         # NixOS-generations -dependent
         inherit nixosGenerationsDir nixosGenBuilder;
       };
-    }
-  );
+    };
 
-  kernelbootGenBuilder = (
+  kernelbootGenBuilder =
     {
       pkgs,
       deviceTreeInstaller,
@@ -81,10 +80,9 @@ let
 
         installDeviceTree = deviceTreeInstaller;
       };
-    }
-  );
+    };
 
-  deviceTree = (
+  deviceTree =
     {
       pkgs,
       firmware,
@@ -101,12 +99,11 @@ let
 
         inherit firmware;
       };
-    }
-  );
+    };
 
   # installs raspberry's firmware independent of the nixos generations
   # sometimes referred to as "boot code"
-  raspberryPiFirmware = (
+  raspberryPiFirmware =
     {
       pkgs,
       firmware,
@@ -124,15 +121,9 @@ let
 
         inherit firmware configTxt;
       };
-    }
-  );
+    };
 
   # Builders used to write during system activation
-  firmwareBuilder = import ./firmware-builder.nix {
-    inherit pkgs;
-    configTxt = cfg.configTxtPackage;
-    firmware = cfg.firmwarePackage;
-  };
   kernelbootBuilder = import ./kernelboot-builder.nix {
     inherit pkgs;
     firmwareBuilder = firmwarePopulateCmd;
@@ -157,7 +148,7 @@ let
   populateUbootBuilder = import ./uboot-builder.nix {
     inherit ubootBinName;
     pkgs = pkgs.buildPackages;
-    ubootPackage = cfg.ubootPackage;
+    inherit (cfg) ubootPackage;
     firmwareBuilder = firmwarePopulateCmd;
     extlinuxConfBuilder = config.boot.loader.generic-extlinux-compatible.populateCmd;
   };
@@ -558,7 +549,7 @@ in
         enable = true;
         # if false, don't add FDTDIR to the extlinux conf file to use the device tree
         # provided by firmware. (we usually want this to be false)
-        useGenerationDeviceTree = cfg.useGenerationDeviceTree;
+        inherit (cfg) useGenerationDeviceTree;
       };
 
       # ... These are also set by generic-extlinux-compatible, but we need to
@@ -567,8 +558,8 @@ in
       # `lib.mkOverride 60` to override the default, while still allowing
       # consuming modules to override with mkForce
       system = {
-        build.installBootLoader = lib.mkOverride 60 (builder.${cfg.bootloader});
-        boot.loader.id = lib.mkOverride 60 ("raspberrypi-${cfg.bootloader}+extlinux");
+        build.installBootLoader = lib.mkOverride 60 builder.${cfg.bootloader};
+        boot.loader.id = lib.mkOverride 60 "raspberrypi-${cfg.bootloader}+extlinux";
       };
     })
 

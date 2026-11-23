@@ -9,7 +9,7 @@
   ncurses,
 }:
 
-stdenv.mkDerivation (finalAttrs: {
+stdenv.mkDerivation (_finalAttrs: {
   pname = "raspberrypi-utils";
   version = "0-unstable-2026-11-05";
 

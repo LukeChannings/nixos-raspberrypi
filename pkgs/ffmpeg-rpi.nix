@@ -1,6 +1,5 @@
 {
   lib,
-  fetchFromGitHub,
   ffmpeg,
   libepoxy, # for vout_egl
   withV4l2Request ? true,
@@ -73,7 +72,7 @@ in
 })).override
   {
     inherit version source;
-    hash = source.hash;
+    inherit (source) hash;
 
     # version = ffmpegVersion + "-rpi";
     # source = rpiFfmpegSrc;

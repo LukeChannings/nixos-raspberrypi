@@ -1,7 +1,6 @@
 # version of "modulesPath + /installer/sd-card/sd-image-aarch64.nix"
 {
   config,
-  pkgs,
   lib,
   modulesPath,
   ...

@@ -1,5 +1,4 @@
 {
-  lib,
   fetchFromGitHub,
   callPackage,
   ffmpeg,

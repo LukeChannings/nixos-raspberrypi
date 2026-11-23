@@ -1,4 +1,4 @@
-final: prev: {
+_final: prev: {
   # https://github.com/nvmd/nixos-raspberrypi/issues/64
   jemalloc =
     if prev.lib.versionAtLeast prev.lib.trivial.release "26.05" then

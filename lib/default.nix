@@ -56,7 +56,7 @@ let
       # NOTE: Not sure how long these two will be provided as a part of public
       # interface, please consider using `nixosSystem` or `nixosSystemFull`
       inject-overlays =
-        { config, lib, ... }:
+        { ... }:
         {
           nixpkgs.overlays = [
             self.overlays.bootloader

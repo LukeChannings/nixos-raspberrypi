@@ -4,11 +4,9 @@ final: prev: {
   ffmpeg-headless = final.ffmpeg_8-headless;
   ffmpeg-full = final.ffmpeg_8-full;
 
-  ffmpeg_4 = (
-    prev.callPackage ../pkgs/ffmpeg_4-rpi.nix {
-      ffmpeg = prev.ffmpeg_4;
-    }
-  ); # small
+  ffmpeg_4 = prev.callPackage ../pkgs/ffmpeg_4-rpi.nix {
+    ffmpeg = prev.ffmpeg_4;
+  }; # small
   ffmpeg_4-headless = final.ffmpeg_4.override {
     ffmpegVariant = "headless";
   };
@@ -16,11 +14,9 @@ final: prev: {
     ffmpegVariant = "full";
   };
 
-  ffmpeg_6 = (
-    prev.callPackage ../pkgs/ffmpeg_6-rpi.nix {
-      ffmpeg = prev.ffmpeg_6;
-    }
-  ); # small
+  ffmpeg_6 = prev.callPackage ../pkgs/ffmpeg_6-rpi.nix {
+    ffmpeg = prev.ffmpeg_6;
+  }; # small
   ffmpeg_6-headless = final.ffmpeg_6.override {
     ffmpegVariant = "headless";
   };
@@ -28,11 +24,9 @@ final: prev: {
     ffmpegVariant = "full";
   };
 
-  ffmpeg_7 = (
-    prev.callPackage ../pkgs/ffmpeg_7-rpi.nix {
-      ffmpeg = prev.ffmpeg_7;
-    }
-  ); # small
+  ffmpeg_7 = prev.callPackage ../pkgs/ffmpeg_7-rpi.nix {
+    ffmpeg = prev.ffmpeg_7;
+  }; # small
   ffmpeg_7-headless = final.ffmpeg_7.override {
     ffmpegVariant = "headless";
   };
@@ -40,11 +34,9 @@ final: prev: {
     ffmpegVariant = "full";
   };
 
-  ffmpeg_8 = (
-    prev.callPackage ../pkgs/ffmpeg_8-rpi.nix {
-      ffmpeg = prev.ffmpeg_8;
-    }
-  ); # small
+  ffmpeg_8 = prev.callPackage ../pkgs/ffmpeg_8-rpi.nix {
+    ffmpeg = prev.ffmpeg_8;
+  }; # small
   ffmpeg_8-headless = final.ffmpeg_8.override {
     ffmpegVariant = "headless";
   };

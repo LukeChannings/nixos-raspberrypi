@@ -2,7 +2,7 @@
 
 {
   nixpkgs.overlays = [
-    (final: prev: {
+    (_final: prev: {
       rpi = import nixos-raspberrypi.inputs.nixpkgs {
         inherit (prev.stdenv.hostPlatform) system;
         config = {

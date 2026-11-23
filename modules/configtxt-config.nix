@@ -7,7 +7,6 @@
 {
   lib,
   config,
-  pkgs,
   ...
 }:
 let
@@ -21,7 +20,7 @@ let
         let
           render-kv = k: v: if v.value == null then k else "${k}=${toString v.value}";
         in
-        lib.attrsets.mapAttrsToList render-kv (lib.filterAttrs (k: v: v.enable) kvs);
+        lib.attrsets.mapAttrsToList render-kv (lib.filterAttrs (_k: v: v.enable) kvs);
 
       render-dt-param = x: "dtparam=" + x;
       render-dt-params = params: lib.strings.concatMapStringsSep "\n" render-dt-param (render-kvs params);
@@ -46,7 +45,7 @@ let
           lib.attrsets.mapAttrsToList (overlay: params: {
             inherit overlay;
             inherit (params) params;
-          }) (lib.filterAttrs (k: v: v.enable) overlays)
+          }) (lib.filterAttrs (_k: v: v.enable) overlays)
         );
 
       render-config-section =

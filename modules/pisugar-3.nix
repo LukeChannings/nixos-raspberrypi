@@ -16,9 +16,9 @@ in
 
   config = lib.mkIf cfg.enable {
     nixpkgs.overlays = [
-      (self: super: {
+      (_self: super: {
         linuxPackages = super.linuxPackages.extend (
-          lpself: lpsuper: {
+          _lpself: _lpsuper: {
             pisugar3 = super.linuxPackages.callPackage ../pkgs/pisugar-kmod.nix {
               pisugarVersion = "3";
             };
