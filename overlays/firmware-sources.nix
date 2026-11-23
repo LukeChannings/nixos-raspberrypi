@@ -1,10 +1,19 @@
-# sources for raspberrypi-firmware
+# Sources for raspberrypi-firmware, one per tracked kernel.
 # https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/os-specific/linux/firmware/raspberrypi/default.nix
+#
+# Firmware and kernel are versioned together: `extra/git_hash` in the firmware
+# tree names the raspberrypi/linux commit it was built against. Each entry
+# here is paired with a kernel in `overlays/linux-and-firmware.nix`; keep the
+# two lists in step, and drop an entry here whenever its kernel leaves
+# `pkgs/linux-rpi/linux-sources.nix`.
+#
+# The `version` date becomes the package suffix, e.g. `1.20260408` ->
+# `raspberrypifw_20260408`.
 [
   {
     # firmware master HEAD, 2026-10-21. Untagged upstream: the newest tag is
     # 1.20260915, which points at 6f0881cb (2026-09-14) and so predates this.
-    # `extra/git_hash` is 7bc8e3eb (rpi-6.18.y, 6.18.58): the vendor still has
+    # `extra/git_hash` is 7bc8e3eb (rpi-6.18.y, 6.18.58): the vendor has still
     # cut no firmware release paired with rpi-7.2.y, so the newest firmware
     # remains the closest match for the v7_2_12 bundle.
     version = "0-unstable-20261021";
@@ -12,102 +21,17 @@
     srcHash = "sha256-VB9j2So7zbc90MXG8UoDNSdb/1j4zuc2E7GATT/Yf4U=";
   }
   {
-    # https://github.com/raspberrypi/firmware/releases/tag/1.20260824
-    # `extra/git_hash` is 16f1da3c (rpi-6.18.y, 6.18.46). Previously carried the
-    # v7_2_0 bundle; now unreferenced by any bundle, retained so consumers
-    # pinning `raspberrypifw_20260824` keep working.
-    version = "1.20260824";
-    tag = "1.20260824";
-    srcHash = "sha256-Pm45K7o7LO1zZ8zfdl/9iGZGlu2byMMnRlUwIaXChYU=";
-  }
-  {
     # this release is untagged in the upstream
-    # matches unstable kernel `raspberrypi/linux` 6.18.42
-    version = "0-unstable-20260806";
-    rev = "2cfe163628eb33eed11c97bfe3fb8169755d7e7a";
-    srcHash = "sha256-f/bqt0G56T/evXKbJiUf6+MWzytGhuJp9ZKPfiQKROQ=";
-  }
-  {
-    # this release is untagged in the upstream
-    # matches stable kernel `raspberrypi/linux` 6.18.39
-    # (from https://github.com/raspberrypi/linux/releases/tag/stable_20260724)
-    # see `extra/git_hash`
-    version = "0-unstable-20260724";
-    rev = "78e81e2cd6e00efeb79c169bff29ec457fa14b11";
-    srcHash = "sha256-QFHoVyZAVqS/ba79dpet0p0wlMIdjXQQcXDALKnfnXs=";
-  }
-  {
-    # https://github.com/raspberrypi/firmware/releases/tag/1.20260521
-    version = "1.20260521";
-    tag = "1.20260521";
-    srcHash = "sha256-zoxAq2VewNqexO0MTknLdi/u3zVYGsS0mqlLyaAtJp8=";
+    # matches unstable kernel `raspberrypi/linux` 6.18.52
+    version = "0-unstable-20260915";
+    rev = "bead686816848038563a542dc854346ab13253a2";
+    srcHash = "sha256-o8elbB6ooTuFEB+fd0gZlu+mGqNlKHQHy2va+bCEMv8=";
   }
   {
     # https://github.com/raspberrypi/firmware/releases/tag/1.20260408
+    # matches unstable kernel `raspberrypi/linux` 6.12.87
     version = "1.20260408";
     tag = "1.20260408";
     srcHash = "sha256-4+eqk+3WxSZRfaGyRIW3zGC6ABo50PKGke0en2IvgXk=";
-  }
-  {
-    # https://github.com/raspberrypi/firmware/releases/tag/1.20250915
-    version = "1.20250915";
-    tag = "1.20250915";
-    # rev = "676efed1194de38975889a34276091da1f5aadd3";
-    srcHash = "sha256-DqVgsPhppxCsZ+H6S7XY5bBoRhOgPipKibDwikqBk08=";
-  }
-  {
-    version = "0-unstable-20250829";
-    # this release for linux 6.12.44 is untagged in the upstream
-    rev = "73065c21a0337eac9de13521fc1254cdadd3bd0a";
-    srcHash = "sha256-cprLY/xtYuE2LjgbQGuPlHBlIYLS5YSp/URvgCLMB14=";
-  }
-  {
-    # this release is untagged in the upstream
-    # this is the version of the matching stable kernel from `raspberrypi/linux`
-    version = "1.20250702";
-    rev = "7022a895240b2f853d9035ab61616b646caf7b3a";
-    srcHash = "sha256-VpjzwVzjgwBRXIfeGblnPzgjYyw7Nr1GqyjKtGnuduk=";
-  }
-  {
-    # https://github.com/raspberrypi/firmware/releases/tag/1.20250430
-    version = "1.20250430";
-    tag = "1.20250430";
-    srcHash = "sha256-U41EgEDny1R+JFktSC/3CE+2Qi7GJludj929ft49Nm0=";
-  }
-  {
-    # https://github.com/raspberrypi/firmware/releases/tag/1.20250127
-    version = "1.20250127";
-    tag = "1.20250127";
-    srcHash = "sha256-gdZt9xS3X1Prh+TU0DLy6treFoJjiUUUiZ3IoDbopzI=";
-  }
-  {
-    # https://github.com/raspberrypi/firmware/releases/tag/1.20241008
-    version = "1.20241008";
-    tag = "1.20241008";
-    srcHash = "sha256-4gnK0KbqFnjBmWia9Jt2gveVWftmHrprpwBqYVqE/k0=";
-  }
-  {
-    # https://github.com/raspberrypi/firmware/releases/tag/1.20240529
-    version = "1.20240529";
-    tag = "1.20240529";
-    srcHash = "sha256-KsCo7ZG6vKstxRyFljZtbQvnDSqiAPdUza32xTY/tlA=";
-  }
-  {
-    # they seem to got back to releases
-    # https://github.com/raspberrypi/firmware/releases/tag/1.20240424
-    version = "1.20240424";
-    tag = "1.20240424";
-    srcHash = "sha256-X5OinkLh/+mx34DM8mCk4tqOGuJdYxkvygv3gA77NJI=";
-  }
-  {
-    version = "stable_20240124";
-    rev = "4649b6d52005b52b1d23f553b5e466941bc862dc";
-    srcHash = "sha256-K+5QBjsic3c2OTi8ROot3BVDnIrXDjZ4C6k3WKWogxI=";
-  }
-  {
-    # as in nixpkgs-unstable
-    version = "stable_20231123";
-    rev = "524247ac6d8b1f4ddd53730e978a70c76a320bd6";
-    srcHash = "sha256-rESwkR7pc5MTwIZ8PaMUPXuzxfv+jVpdRp8ijvxHGcg=";
   }
 ]

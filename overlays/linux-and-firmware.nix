@@ -1,3 +1,29 @@
+# Kernel bundles: a vendor kernel with the firmware revisions it was built
+# against, exposed as `pkgs.linuxAndFirmware.<alias or version>`.
+#
+# Three aliases sit on top of the per-version bundles:
+#
+#   latest   the newest kernel this fork tracks — what the cm4/cm5 profiles
+#            run, and what `default` points at
+#   zfs      the newest tracked kernel OpenZFS still supports — what the
+#            cm4-zfs/cm5-zfs profiles run
+#   default  what `pkgs.linux_rpi<model>` and friends resolve to for anything
+#            that does not ask for a bundle by name
+#
+# `zfs` is computed, not pinned. OpenZFS declares the kernel range it builds
+# against (`kernelMinSupportedMajorMinor`/`kernelMaxSupportedMajorMinor` in
+# nixpkgs, surfaced as `meta.broken` on the kernel module), and that ceiling
+# moves with every nixpkgs bump. So the alias walks the tracked versions
+# newest-first and takes the first one whose kernel module is not broken,
+# which means:
+#
+#   * while OpenZFS keeps up with the vendor kernel, `zfs` == `latest` and the
+#     -zfs profiles cost no extra build,
+#   * when the vendor jumps ahead of OpenZFS, `zfs` falls back a rung by
+#     itself — no one has to notice and edit a pin,
+#   * a version can only be removed from `pkgs/linux-rpi/linux-sources.nix`
+#     once nothing below it is needed as a rung; removing them all makes this
+#     throw rather than silently publish a ZFS-less kernel.
 let
   # linux kernel with compatible firmware
   mkBundle = final: name: firmware: {
@@ -28,6 +54,27 @@ let
       raspberrypiWirelessFirmware = wFw;
     });
   };
+
+  # Tracked versions, newest first — the same order as
+  # `pkgs/linux-rpi/linux-sources.nix`, which is what the aliases below walk.
+  versions = [
+    "v7_2_12"
+    "v6_18_52"
+    "v6_12_87"
+  ];
+
+  # Does OpenZFS build against this bundle's kernel? `pkgs.zfs` is the
+  # userspace package NixOS defaults `boot.zfs.package` to; its
+  # `kernelModuleAttribute` names the matching kernel module in a
+  # `linuxPackagesFor` set, whose `meta.broken` carries nixpkgs' verdict.
+  # Reading `meta` only evaluates — no kernel is built to answer this.
+  supportsZfs =
+    final: bundle:
+    let
+      kmod = bundle.linuxPackages_rpi5.${final.zfs.kernelModuleAttribute} or null;
+    in
+    kmod != null && !(kmod.meta.broken or true);
+
 in
 final: prev: {
 
@@ -46,40 +93,14 @@ final: prev: {
 
   linuxAndFirmware = prev.lib.mergeAttrsList [
 
-    { default = final.linuxAndFirmware.v6_18_42; }
-
-    # Fork-owned alias: hartlandia's CM4/CM5 blades track `latest`, which is
-    # ahead of upstream's. Merges from nvmd must not regress it.
-    { latest = final.linuxAndFirmware.v7_2_12; }
-
     (mkBundle final "v7_2_12" {
       fw = final.raspberrypifw_20261021;
       wFw = final.raspberrypiWirelessFirmware_20260321;
     })
 
-    (mkBundle final "v6_18_42" {
-      fw = final.raspberrypifw_20260806;
+    (mkBundle final "v6_18_52" {
+      fw = final.raspberrypifw_20260915;
       wFw = final.raspberrypiWirelessFirmware_20260321;
-    })
-
-    (mkBundle final "v6_18_39" {
-      fw = final.raspberrypifw_20260724;
-      wFw = final.raspberrypiWirelessFirmware_20260321;
-    })
-
-    (mkBundle final "v6_18_34" {
-      fw = final.raspberrypifw_20260521;
-      wFw = final.raspberrypiWirelessFirmware_20260321;
-    })
-
-    (mkBundle final "v6_18_33" {
-      fw = final.raspberrypifw_20260521;
-      wFw = final.raspberrypiWirelessFirmware_20260321;
-    })
-
-    (mkBundle final "v6_18_32" {
-      fw = final.raspberrypifw_20260521;
-      wFw = final.raspberrypiWirelessFirmware_20251008;
     })
 
     (mkBundle final "v6_12_87" {
@@ -87,61 +108,21 @@ final: prev: {
       wFw = final.raspberrypiWirelessFirmware_20251008;
     })
 
-    (mkBundle final "v6_12_85" {
-      fw = final.raspberrypifw_20260408;
-      wFw = final.raspberrypiWirelessFirmware_20251008;
-    })
+    {
+      latest = final.linuxAndFirmware.${builtins.head versions};
 
-    (mkBundle final "v6_12_75" {
-      fw = final.raspberrypifw_20260408;
-      wFw = final.raspberrypiWirelessFirmware_20251008;
-    })
+      zfs =
+        let
+          bundles = map (v: final.linuxAndFirmware.${v}) versions;
+        in
+        prev.lib.findFirst (supportsZfs final) (throw ''
+          No kernel in pkgs/linux-rpi/linux-sources.nix is supported by
+          ${final.zfs.pname or "zfs"}-${final.zfs.version}. Track an older
+          kernel (see the ZFS ladder comment in that file), or pin an
+          OpenZFS release that supports one of them.
+        '') bundles;
 
-    (mkBundle final "v6_12_47" {
-      fw = final.raspberrypifw_20250915;
-      wFw = final.raspberrypiWirelessFirmware_20251008;
-    })
-
-    (mkBundle final "v6_12_44" {
-      fw = final.raspberrypifw_20250829;
-      wFw = final.raspberrypiWirelessFirmware_20250408;
-    })
-
-    (mkBundle final "v6_12_34" {
-      fw = final.raspberrypifw_20250702;
-      wFw = final.raspberrypiWirelessFirmware_20250408;
-    })
-
-    (mkBundle final "v6_12_25" {
-      fw = final.raspberrypifw_20250430;
-      wFw = final.raspberrypiWirelessFirmware_20250408;
-    })
-
-    (mkBundle final "v6_6_74" {
-      fw = final.raspberrypifw_20250127;
-      wFw = final.raspberrypiWirelessFirmware_20241223;
-    })
-
-    (mkBundle final "v6_6_51" {
-      fw = final.raspberrypifw_20241008;
-      wFw = final.raspberrypiWirelessFirmware_20240226;
-    })
-    (mkBundle final "v6_6_31" {
-      fw = final.raspberrypifw_20240529;
-      wFw = final.raspberrypiWirelessFirmware_20240226;
-    })
-    (mkBundle final "v6_6_28" {
-      fw = final.raspberrypifw_20240424;
-      wFw = final.raspberrypiWirelessFirmware_20240226;
-    })
-    (mkBundle final "v6_1_73" {
-      fw = final.raspberrypifw_20240124;
-      # as seen in https://github.com/NixOS/nixpkgs/pull/292880:
-      wFw = final.raspberrypiWirelessFirmware_20240226;
-    })
-    (mkBundle final "v6_1_63" {
-      fw = final.raspberrypifw_20231123;
-      wFw = final.raspberrypiWirelessFirmware_20231115;
-    })
+      default = final.linuxAndFirmware.latest;
+    }
   ];
 }

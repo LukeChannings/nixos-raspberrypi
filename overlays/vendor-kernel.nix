@@ -1,5 +1,14 @@
+# One kernel derivation per (board model, tracked version), named
+# `linux_rpi<model>_v<version>`, e.g. `linux_rpi5_v7_2_12`.
+#
+# `pkgs/linux-rpi/linux-sources.nix` decides which versions exist. An entry
+# there may carry per-version build arguments as well as its source — e.g.
+# `structuredExtraConfig`, `fixupStructuredConfig` or `kernelPatches` — and
+# they are merged over the common arguments below. The merge is recursive so
+# that a version adding its own `kernelPatches` extends the common list
+# instead of silently replacing it.
 let
-  # the latter value is retained when can't be merged
+  # the latter value is retained when it can't be merged
   recursiveMerge =
     pkgs:
     with pkgs.lib;
@@ -21,155 +30,36 @@ let
     in
     f [ ] attrList;
 
-  mkLinuxFor =
-    pkgs: version: models:
-    let
-      argsFor = (import ../pkgs/linux-rpi/kernels.nix { inherit pkgs; })."v${version}";
-      linuxVersionForModel = rpiModel: {
-        # in nixpkgs this is also in pkgs.linuxKernel.packages.<...>
-        # see also https://github.com/NixOS/nixos-hardware/pull/927
-        # linux_rpi4_v6_6_28 = pkgs.linux_rpi4.override {
-        #   argsOverride = linux_v6_6_28_argsOverride pkgs;
-        # };
+  sources = import ../pkgs/linux-rpi/linux-sources.nix;
 
-        # as in https://github.com/NixOS/nixpkgs/blob/master/pkgs/top-level/linux-kernels.nix#L91
-        "linux_rpi${rpiModel}_v${version}" = pkgs.callPackage ../pkgs/linux-rpi/package.nix (
-          recursiveMerge pkgs [
-            {
-              # argsOverride = argsFor.argsOverride;
-              kernelPatches = with pkgs.kernelPatches; [
-                bridge_stp_helper
-                request_key_helper
-              ];
-              inherit rpiModel;
-            }
-            argsFor
-          ]
-        );
+  # `6.12.87` -> `v6_12_87`, the key used throughout the flake.
+  versionKey = source: "v${builtins.replaceStrings [ "." ] [ "_" ] source.modDirVersion}";
 
-        # https://github.com/NixOS/nixpkgs/blob/master/pkgs/os-specific/linux/kernel/linux-rpi.nix
-        # overriding other override like this doesn't work
-        # linux_rpi5 = final.linux_rpi4.override {
-        #   rpiVersion = 5;
-        #   argsOverride.defconfig = "bcm2712_defconfig";
-        # };
-        # linux_rpi5_v6_6_28 = final.linux_rpi4_v6_6_28.override {
-        #   rpiVersion = 5;
-        #   argsOverride = (linux_v6_6_28_argsOverride pkgs) // {
-        #     defconfig = "bcm2712_defconfig";
-        #   };
-        # };
-      };
-    in
-    map linuxVersionForModel models;
+  # Every tracked version builds for every board model. Publishing (what CI
+  # builds and pushes to the cache) is narrower — see `packages` in flake.nix.
+  models = [
+    "02"
+    "3"
+    "4"
+    "5"
+  ];
+
+  mkLinux = pkgs: source: rpiModel: {
+    # as in https://github.com/NixOS/nixpkgs/blob/master/pkgs/top-level/linux-kernels.nix
+    "linux_rpi${rpiModel}_${versionKey source}" = pkgs.callPackage ../pkgs/linux-rpi/package.nix (
+      recursiveMerge pkgs [
+        {
+          kernelPatches = with pkgs.kernelPatches; [
+            bridge_stp_helper
+            request_key_helper
+          ];
+          inherit rpiModel;
+        }
+        source
+      ]
+    );
+  };
 
 in
 final: prev:
-prev.lib.mergeAttrsList (
-  builtins.concatLists [
-    (mkLinuxFor final "7_2_12" [
-      "02"
-      "3"
-      "4"
-      "5"
-    ])
-    (mkLinuxFor final "6_18_42" [
-      "02"
-      "3"
-      "4"
-      "5"
-    ])
-    (mkLinuxFor final "6_18_39" [
-      "02"
-      "3"
-      "4"
-      "5"
-    ])
-    (mkLinuxFor final "6_18_34" [
-      "02"
-      "3"
-      "4"
-      "5"
-    ])
-    (mkLinuxFor final "6_18_33" [
-      "02"
-      "3"
-      "4"
-      "5"
-    ])
-    (mkLinuxFor final "6_18_32" [
-      "02"
-      "3"
-      "4"
-      "5"
-    ])
-    (mkLinuxFor final "6_12_87" [
-      "02"
-      "3"
-      "4"
-      "5"
-    ])
-    (mkLinuxFor final "6_12_85" [
-      "02"
-      "3"
-      "4"
-      "5"
-    ])
-    (mkLinuxFor final "6_12_75" [
-      "02"
-      "3"
-      "4"
-      "5"
-    ])
-    (mkLinuxFor final "6_12_47" [
-      "02"
-      "3"
-      "4"
-      "5"
-    ])
-    (mkLinuxFor final "6_12_44" [
-      "02"
-      "3"
-      "4"
-      "5"
-    ])
-    (mkLinuxFor final "6_12_34" [
-      "02"
-      "3"
-      "4"
-      "5"
-    ])
-    (mkLinuxFor final "6_12_25" [
-      "02"
-      "3"
-      "4"
-      "5"
-    ])
-    (mkLinuxFor final "6_6_74" [
-      "02"
-      "4"
-      "5"
-    ])
-    (mkLinuxFor final "6_6_51" [
-      "02"
-      "4"
-      "5"
-    ])
-    (mkLinuxFor final "6_6_31" [
-      "4"
-      "5"
-    ])
-    (mkLinuxFor final "6_6_28" [
-      "4"
-      "5"
-    ])
-    (mkLinuxFor final "6_1_73" [
-      "4"
-      "5"
-    ])
-    (mkLinuxFor final "6_1_63" [
-      "4"
-      "5"
-    ])
-  ]
-)
+prev.lib.mergeAttrsList (prev.lib.concatMap (source: map (mkLinux final source) models) sources)

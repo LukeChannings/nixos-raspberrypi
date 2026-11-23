@@ -1,122 +1,50 @@
+# Vendor kernel sources (raspberrypi/linux) tracked by this fork.
+#
+# This list is the single source of truth for which kernels exist here: every
+# `linux_rpi<model>_v<version>` package, every `linuxAndFirmware.v<version>`
+# bundle, and therefore every profile, derives from it. Keep it short — each
+# entry that a profile selects is ~1.5h of CI time per board, and each entry
+# that no profile selects is dead weight.
+#
+# Ordered newest first. `overlays/linux-and-firmware.nix` consumes that order:
+# `latest` is the head, `zfs` is the first entry OpenZFS still supports.
+#
+# Adding a version:
+#   1. add it here, newest first, with the firmware it pairs with added to
+#      `overlays/firmware-sources.nix` (match `extra/git_hash` in the firmware
+#      tree against the kernel's rev),
+#   2. pair the two in `overlays/linux-and-firmware.nix`,
+#   3. `just test` to confirm every profile still evaluates.
+#
+# Removing a version: anything the `zfs` ladder may still need must stay —
+# see the comment on that alias.
+#
+# NOTE: srcHash must be computed on a case-sensitive filesystem.
+# raspberrypi/linux carries case-colliding headers (e.g. netfilter
+# xt_CONNMARK.h vs xt_connmark.h); a macOS unpack silently drops the
+# uppercase partners and yields a hash that fails on every Linux builder.
 [
   {
-    # rpi-7.2.y branch HEAD, 2026-10-25
-    # NOTE: srcHash must be computed on a case-sensitive filesystem.
-    # raspberrypi/linux carries case-colliding headers (e.g. netfilter
-    # xt_CONNMARK.h vs xt_connmark.h); a macOS unpack silently drops the
-    # uppercase partners and yields a hash that fails on every Linux builder.
+    # rpi-7.2.y branch HEAD, 2026-10-25. The `latest` bundle, and what the
+    # cm4/cm5 profiles run.
     modDirVersion = "7.2.12";
     tag = "unstable_20261025";
     rev = "ce7147911b8d523c46726045ff2f7adf85bc9cb8"; # 7.2.12
     srcHash = "sha256-zkn5FPBCRy/gqPfUOa7JgEHc16ylqymHNbOgqfJTSNA=";
   }
   {
-    modDirVersion = "6.18.42";
-    tag = "unstable_20260806";
-    rev = "8c0da7c3bb97a2e0aaa0d405d3052786c1469b35";
-    srcHash = "sha256-CMjVylJFgiX9TRQ+drFr/OicaKp0W7r0idIKdMSIuGA=";
+    # rpi-6.18.y, first rung below `latest` on the ZFS ladder.
+    modDirVersion = "6.18.52";
+    tag = "unstable_20260915";
+    rev = "4bb240615790ea5bd939484f4595b6952ac94ef4";
+    srcHash = "sha256-aI1Rqihe3nV3th2/gEKS4Y1A9AClT9l5688WROiVRrM=";
   }
   {
-    # https://github.com/raspberrypi/linux/releases/tag/stable_20260724
-    modDirVersion = "6.18.39";
-    tag = "stable_20260724";
-    srcHash = "sha256-IT/SkF458oLmnFIPbN76Qp6s8KVxKQOC02XmN7NRdBc=";
-  }
-  {
-    modDirVersion = "6.18.34";
-    tag = "stable_20260609";
-    srcHash = "sha256-ok++36dh9o4e7AC5RErW00/r23rGxufe0PYXz5Dzy5U=";
-  }
-  {
-    # https://github.com/raspberrypi/linux/releases/tag/stable_20260527
-    modDirVersion = "6.18.33";
-    tag = "stable_20260527";
-    srcHash = "sha256-XGL2SgPws+c1yAZDmNC9jQdi23qQPZKucQUr9+eD8MM=";
-  }
-  {
-    # rpi-6.18.y branch HEAD, 2026-05-22
-    modDirVersion = "6.18.32";
-    tag = "unstable_20260522";
-    rev = "bb5a64adb1b761406d0e3b6570c3d2668e9198f8"; # 6.18.32
-    srcHash = "sha256-rpWHYPW4JotPczjB8ENzX0m+IypHX24N3GTK8s8d1dM=";
-  }
-  {
+    # rpi-6.12.y (LTS), the floor of the ZFS ladder: whatever OpenZFS drops
+    # support for above, this stays supported for years.
     modDirVersion = "6.12.87";
     tag = "unstable_20260509";
     rev = "ae4d75fb36deba0fe1a986d9bfae65755e082dd0"; # 6.12.87
     srcHash = "sha256-vAjVe2f3+1+6HZCp7hfCEvS4XE2OveIRe/+3+oSFdZI=";
-  }
-  {
-    modDirVersion = "6.12.85";
-    tag = "unstable_20260430";
-    rev = "effcbc88e3ab970a2d2aafdfe7c9333766f7139a"; # 6.12.85
-    srcHash = "sha256-tETejewZ+nIFgxiNHXIntm1F/Ayloy2ca9oieVLRqYQ=";
-  }
-  {
-    modDirVersion = "6.12.75";
-    tag = "unstable_20260413";
-    rev = "89050b1059997d38d55462b323b099a6436dc10d"; # 6.12.75
-    srcHash = "sha256-qrljd20n4tj/7C7gzNnxw7JIyEF2Ppf1PWm2a7vxh1w=";
-  }
-  {
-    # https://github.com/raspberrypi/linux/releases/tag/stable_20250916
-    modDirVersion = "6.12.47";
-    tag = "stable_20250916";
-    srcHash = "sha256-HG8Oc04V2t54l0SOn4gKmNJWQUrZfjWusgKcWvx74H0=";
-  }
-  {
-    modDirVersion = "6.12.44";
-    tag = "unstable_20250829";
-    rev = "6c61955254d5c1af6687e79b1de4db7e76c9ff68"; # 6.12.44
-    srcHash = "sha256-5v28FioaPYSV6HYGiJn4X+PZ7byOPDCVKZfU0JukV3A=";
-  }
-  {
-    # https://github.com/raspberrypi/linux/releases/tag/stable_20250702
-    modDirVersion = "6.12.34";
-    tag = "stable_20250702"; # 8f77e03530f65209a377d25023e912b288e039cd
-    srcHash = "sha256-lK0esjFhLvtBbyddMfa1H7ZcBbcOm2ygor338ZT5VpI=";
-  }
-  {
-    # https://github.com/raspberrypi/linux/releases/tag/stable_20250428
-    # this version seems to be released as a part of "2025-04-30"
-    modDirVersion = "6.12.25";
-    tag = "stable_20250428";
-    srcHash = "sha256-jVvJJJP4wSJm91jOz8QMXIujjGZ+IisTMCvusxarons";
-  }
-  {
-    # https://github.com/raspberrypi/linux/releases/tag/stable_20250127
-    modDirVersion = "6.6.74";
-    tag = "stable_20250127";
-    srcHash = "sha256-17PrkPUGBKU+nO40OP+O9dzZeCfRPlKnnk/PJOGamU8=";
-  }
-  {
-    # https://github.com/raspberrypi/linux/releases/tag/stable_20240529
-    modDirVersion = "6.6.51";
-    tag = "stable_20241008";
-    srcHash = "sha256-phCxkuO+jUGZkfzSrBq6yErQeO2Td+inIGHxctXbD5U=";
-  }
-  {
-    # https://github.com/raspberrypi/linux/releases/tag/stable_20240529
-    modDirVersion = "6.6.31";
-    tag = "stable_20240529";
-    srcHash = "sha256-UWUTeCpEN7dlFSQjog6S3HyEWCCnaqiUqV5KxCjYink=";
-  }
-  {
-    # https://github.com/raspberrypi/linux/releases/tag/stable_20240423
-    modDirVersion = "6.6.28";
-    tag = "stable_20240423";
-    srcHash = "sha256-mlsDuVczu0e57BlD/iq7IEEluOIgqbZ+W4Ju30E/zhw=";
-  }
-  {
-    # https://github.com/raspberrypi/linux/releases/tag/stable_20240124
-    modDirVersion = "6.1.73";
-    tag = "stable_20240124";
-    srcHash = "sha256-P4ExzxWqZj+9FZr9U2tmh7rfs/3+iHEv0m74PCoXVuM=";
-  }
-  {
-    # https://github.com/raspberrypi/linux/releases/tag/stable_20231123
-    modDirVersion = "6.1.63";
-    tag = "stable_20231123";
-    srcHash = "sha256-4Rc57y70LmRFwDnOD4rHoHGmfxD9zYEAwYm9Wvyb3no=";
   }
 ]
