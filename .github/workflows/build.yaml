@@ -1,0 +1,121 @@
+---
+name: Build
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Everything this flake publishes is aarch64-linux, so every job here runs on
+# an arm runner and builds natively. A kernel is roughly 1.5h, comfortably
+# inside the 6h job limit, and the whole point of spending it here is that no
+# blade ever has to.
+jobs:
+  kernels:
+    name: Build ${{ matrix.attr }}
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      # One broken kernel should not hide the state of the others.
+      fail-fast: false
+      matrix:
+        # Unsuffixed is the `latest` bundle, `-zfs` the newest bundle OpenZFS
+        # supports. While the two aliases resolve to the same version these
+        # are the same derivation, so the second build of each pair is free.
+        attr:
+          - linux_rpi4
+          - linux_rpi4-zfs
+          - linux_rpi5
+          - linux_rpi5-zfs
+    steps:
+      # yamllint disable-line rule:line-length
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      # yamllint disable-line rule:line-length
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa  # v23
+        with:
+          determinate: false
+      - uses: lukechannings/nixham/.forgejo/actions/substituter@main
+      - uses: lukechannings/nixham/.forgejo/actions/setup-nix-shell@main
+      - name: Build
+        run: just build ${{ matrix.attr }}
+      - name: Collect store paths
+        id: paths
+        env:
+          ATTR: ${{ matrix.attr }}
+        # `nix-build` above symlinks `result` for the default output only,
+        # and a kernel's `dev` output — the configured build tree that
+        # out-of-tree modules such as ZFS compile against — is not in `out`'s
+        # closure. Pushing `./result*` would therefore cache a kernel that
+        # still costs an hour to build a module against. `nix-store
+        # --realise` on the derivation names every output instead, and the
+        # derivation itself goes along so the cache carries how the kernel
+        # was built, not just what came out.
+        run: |
+          set -euo pipefail
+          drv=$(nix-instantiate -A "$ATTR")
+          outputs=$(nix-store --realise "$drv" | tr '\n' ' ')
+          echo "Pushing: $outputs$drv"
+          echo "paths=$outputs$drv" >> "$GITHUB_OUTPUT"
+      # Fork PRs get no secrets.
+      - name: Push to nix.channings.me
+        if: >-
+          github.event_name != 'pull_request'
+          || github.event.pull_request.head.repo.full_name == github.repository
+        uses: lukechannings/nixham/.forgejo/actions/niks3-push@main
+        with:
+          token: ${{ secrets.NIKS3_CI_TOKEN }}
+          paths: ${{ steps.paths.outputs.paths }}
+
+  systems:
+    name: Build ${{ matrix.attr }}
+    # The kernels land in the cache first, so these substitute them instead
+    # of building a second copy per profile.
+    needs: kernels
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        # The reference system of each published profile: what a blade
+        # importing that profile shares with it, which is what we want cached.
+        attr:
+          - cm4-system
+          - cm4-zfs-system
+          - cm5-system
+          - cm5-zfs-system
+    steps:
+      # yamllint disable-line rule:line-length
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      # yamllint disable-line rule:line-length
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa  # v23
+        with:
+          determinate: false
+      - uses: lukechannings/nixham/.forgejo/actions/substituter@main
+      - uses: lukechannings/nixham/.forgejo/actions/setup-nix-shell@main
+      - name: Build
+        run: just build ${{ matrix.attr }}
+      - name: Collect store paths
+        id: paths
+        env:
+          ATTR: ${{ matrix.attr }}
+        run: |
+          set -euo pipefail
+          drv=$(nix-instantiate -A "$ATTR")
+          outputs=$(nix-store --realise "$drv" | tr '\n' ' ')
+          echo "Pushing: $outputs$drv"
+          echo "paths=$outputs$drv" >> "$GITHUB_OUTPUT"
+      # Fork PRs get no secrets.
+      - name: Push to nix.channings.me
+        if: >-
+          github.event_name != 'pull_request'
+          || github.event.pull_request.head.repo.full_name == github.repository
+        uses: lukechannings/nixham/.forgejo/actions/niks3-push@main
+        with:
+          token: ${{ secrets.NIKS3_CI_TOKEN }}
+          paths: ${{ steps.paths.outputs.paths }}

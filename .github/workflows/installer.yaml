@@ -1,0 +1,43 @@
+---
+name: Installer images
+
+# Not part of Build: an sd-image is multi-gigabyte, single-use, and nothing
+# substitutes from it, so it is built on demand and kept as an artefact
+# rather than pushed to the cache.
+"on":
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 2"  # run at 00:00 every Tuesday
+
+permissions:
+  contents: read
+
+jobs:
+  installer:
+    name: Build installer-rpi${{ matrix.variant }}
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: ["4", "5"]
+    steps:
+      # yamllint disable-line rule:line-length
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      # yamllint disable-line rule:line-length
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa  # v23
+        with:
+          determinate: false
+      - uses: lukechannings/nixham/.forgejo/actions/substituter@main
+      - uses: lukechannings/nixham/.forgejo/actions/setup-nix-shell@main
+      - name: Build
+        run: just build installer-rpi${{ matrix.variant }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: nixos-installer-rpi${{ matrix.variant }}
+          path: result/sd-image/*.img.zst
+          retention-days: 40
+          compression-level: 0
+          if-no-files-found: error
