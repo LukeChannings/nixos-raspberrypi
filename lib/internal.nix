@@ -7,7 +7,7 @@
       trustCaches ? true,
       rpiModules,
     }:
-    { modules, ... }@args:
+    args:
     nixpkgs.lib.nixosSystem (
       builtins.removeAttrs args [
         "nixpkgs"
@@ -19,8 +19,8 @@
         };
         modules =
           rpiModules
-          # Nix cache with prebuilt packages,
-          # see `devshells/nix-build-to-cachix.nix` for a list
+          # Nix caches with prebuilt packages, see `packages` in flake.nix
+          # for what this repository builds and pushes to them
           ++ lib.optional trustCaches self.nixosModules.trusted-nix-caches
           # User modules
           ++ args.modules;
@@ -28,7 +28,7 @@
     );
 
   full-nixos-raspberrypi-config =
-    { config, ... }:
+    { ... }:
     {
       imports = with self.nixosModules; [
         self.lib.int.default-nixos-raspberrypi-config
@@ -38,7 +38,7 @@
     };
 
   default-nixos-raspberrypi-config =
-    { config, ... }:
+    { ... }:
     {
       # the only fully supported architecture
       nixpkgs.hostPlatform = "aarch64-linux";
