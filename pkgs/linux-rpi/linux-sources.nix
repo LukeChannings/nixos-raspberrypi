@@ -34,10 +34,10 @@
   }
   {
     # rpi-6.18.y, first rung below `latest` on the ZFS ladder.
-    modDirVersion = "6.18.52";
-    tag = "unstable_20260915";
-    rev = "4bb240615790ea5bd939484f4595b6952ac94ef4";
-    srcHash = "sha256-aI1Rqihe3nV3th2/gEKS4Y1A9AClT9l5688WROiVRrM=";
+    modDirVersion = "6.18.59";
+    tag = "unstable_20261026";
+    rev = "9b488bc7a1e9b61713082f3e6c4361988d62f77b";
+    srcHash = "sha256-gG3qRFOJzrDH7vXWGgeWYyYupaxwmeZzqh47NursKLs=";
   }
   {
     # rpi-6.12.y (LTS), the floor of the ZFS ladder: whatever OpenZFS drops

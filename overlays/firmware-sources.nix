@@ -22,10 +22,11 @@
   }
   {
     # this release is untagged in the upstream
-    # matches unstable kernel `raspberrypi/linux` 6.18.52
-    version = "0-unstable-20260915";
-    rev = "bead686816848038563a542dc854346ab13253a2";
-    srcHash = "sha256-o8elbB6ooTuFEB+fd0gZlu+mGqNlKHQHy2va+bCEMv8=";
+    # matches unstable kernel `raspberrypi/linux` 6.18.59
+    # see `extra/git_hash`
+    version = "0-unstable-20261027";
+    rev = "f2491b71ed49880cc8285e41e03f81b163c6cd59";
+    srcHash = "sha256-kRZmbXUT9Ua23JxV1keW99zf+jweUwBLtwX9+pEpSWo=";
   }
   {
     # https://github.com/raspberrypi/firmware/releases/tag/1.20260408

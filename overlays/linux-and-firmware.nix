@@ -59,7 +59,7 @@ let
   # `pkgs/linux-rpi/linux-sources.nix`, which is what the aliases below walk.
   versions = [
     "v7_2_12"
-    "v6_18_52"
+    "v6_18_59"
     "v6_12_87"
   ];
 
@@ -98,8 +98,8 @@ final: prev: {
       wFw = final.raspberrypiWirelessFirmware_20260321;
     })
 
-    (mkBundle final "v6_18_52" {
-      fw = final.raspberrypifw_20260915;
+    (mkBundle final "v6_18_59" {
+      fw = final.raspberrypifw_20261027;
       wFw = final.raspberrypiWirelessFirmware_20260321;
     })
 

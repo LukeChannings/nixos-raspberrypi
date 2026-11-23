@@ -39,7 +39,7 @@ _final: prev:
 prev.lib.mergeAttrsList (map (firmwareVersion prev) allFirmware)
 // {
 
-  # paired with the v7_2_12 and v6_18_52 kernels
+  # paired with the v7_2_12 and v6_18_59 kernels
   raspberrypiWirelessFirmware_20260321 = prev.raspberrypiWirelessFirmware.overrideAttrs (_: {
     version = "2026-03-21";
     srcs = [
