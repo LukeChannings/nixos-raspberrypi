@@ -1,4 +1,7 @@
-.direnv
-.DS_Store
 result
 result-*
+.direnv/
+.env
+.worktrees/
+
+.DS_Store

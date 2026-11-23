@@ -27,3 +27,6 @@
 
 # style: format files
 954a04d04919f898649c21800af28af1d8aa4565
+
+# style: format the tree with treefmt
+9e1a8e2bb280f8319875046abd641c96d0134e95
