@@ -7,7 +7,8 @@ blades run.
 A fork of [nvmd/nixos-raspberrypi](https://github.com/nvmd/nixos-raspberrypi),
 narrowed to what this fleet uses and made self-contained: the kernel versions
 are decided here, built here, and cached here. Nothing waits on an upstream
-release or an upstream cache.
+release or an upstream cache. Upstream's work still arrives, as a sync PR —
+see [Syncing with upstream](#syncing-with-upstream).
 
 ## What this repository publishes
 
@@ -206,9 +207,37 @@ builds natively on arm runners instead.
 | Build | GitHub (`ubuntu-24.04-arm`) | kernels, then profile closures → `nix.channings.me` |
 | Installer images | GitHub (`ubuntu-24.04-arm`) | sd-images as artefacts, weekly |
 | Update flake.lock | GitHub | weekly PR |
+| Upstream sync | Forgejo | weekly `sync/upstream` PR |
 
 Build lives on GitHub because its arm64 runners are what make a native
 aarch64 kernel build free.
+
+### Syncing with upstream
+
+Upstream's commits come in through a `sync/upstream` PR against `main`, opened
+weekly by the Upstream sync workflow. It tracks upstream's **`develop`**: this
+fork branched from there and carries commits upstream's `main` has not
+promoted yet, so develop is the branch our history actually continues.
+
+The workflow never resolves anything. A merge that conflicts is left for a
+person — nothing is pushed, and the conflicting paths land in the job log and
+on the PR. Expect conflicts in the places this fork deliberately diverges:
+`flake.nix`, `overlays/`, `pkgs/linux-rpi/`, the workflows and this README.
+When a sync touches the kernel lists, the question to ask is not "what did
+upstream change" but "does this fleet want that kernel" — see below.
+
+When resolving a sync PR: merge it with a merge commit or a fast-forward,
+**never squash it**, and bring `main` into it by merging rather than rebasing.
+Rewriting upstream's commits makes every later sync conflict with the
+rewritten copies.
+
+To merge by hand instead:
+
+```sh
+git remote add upstream https://github.com/nvmd/nixos-raspberrypi.git
+git fetch upstream develop
+git merge upstream/develop
+```
 
 ### Adding a kernel version
 

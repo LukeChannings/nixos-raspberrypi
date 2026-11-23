@@ -1,0 +1,35 @@
+---
+name: Upstream sync
+
+# This fork diverges from nvmd/nixos-raspberrypi in a few deliberate places
+# (the pruned kernel list, the flake-parts outputs, the profiles, CI), so
+# upstream's commits arrive as a reviewable `sync/upstream` PR rather than
+# landing on `main`. A merge that conflicts is left alone for a person to
+# resolve: nothing is pushed and the conflicting paths go to the job log.
+#
+# Tracks upstream's `develop`, not `main`: this fork branched from develop and
+# already carries commits that upstream's main has not promoted yet, so
+# develop is the branch our history actually continues. Upstream's main is the
+# more conservative choice if these blades ever want to lag behind it.
+#
+# Resolving a sync PR: merge it with a merge commit or a fast-forward, never a
+# squash, and bring `main` into it by merging rather than rebasing. Rewriting
+# upstream's commits would make every later sync conflict with the rewritten
+# copies.
+"on":
+  schedule:
+    - cron: "0 6 * * 1"  # run at 06:00 every Monday
+  workflow_dispatch:
+
+jobs:
+  sync:
+    name: Sync with nvmd/nixos-raspberrypi
+    runs-on: nixos-latest
+    steps:
+      # yamllint disable-line rule:line-length
+      - uses: https://forge.channings.me/hartlandia/nixham/.forgejo/actions/upstream-sync@main
+        with:
+          upstream: https://github.com/nvmd/nixos-raspberrypi.git
+          branch: develop
+          token: ${{ secrets.FORGE_PAT }}
+          signing_key: ${{ secrets.SIGNING_KEY }}

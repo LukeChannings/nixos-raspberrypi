@@ -49,10 +49,26 @@ let
     "linux_rpi${rpiModel}_${versionKey source}" = pkgs.callPackage ../pkgs/linux-rpi/package.nix (
       recursiveMerge pkgs [
         {
-          kernelPatches = with pkgs.kernelPatches; [
-            bridge_stp_helper
-            request_key_helper
-          ];
+          kernelPatches =
+            with pkgs.kernelPatches;
+            [
+              bridge_stp_helper
+              request_key_helper
+            ]
+            # linux-headers >= 7.3 use __u128 in the arm64 UAPI headers, and
+            # older kernel trees lack the matching typedef in tools/, which
+            # breaks tools/bpf/resolve_btfids. Same backport nixpkgs applies
+            # to its own kernels < 7.3 (NixOS/nixpkgs#581990), via upstream
+            # nvmd/nixos-raspberrypi@6fdf35c.
+            #
+            # Dormant here: this flake's nixpkgs (26.05) ships 6.18 headers
+            # and no such patch, so both guards are false. It arms itself if
+            # the nixpkgs input ever moves to a channel with 7.3+ headers,
+            # which is where every kernel below would otherwise stop
+            # building.
+            ++ pkgs.lib.optional (
+              pkgs.kernelPatches ? tools_128bit_types && pkgs.lib.versionOlder source.modDirVersion "7.3"
+            ) tools_128bit_types;
           inherit rpiModel;
         }
         source
