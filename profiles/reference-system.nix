@@ -24,6 +24,12 @@
   # deployed, so a fixed value is fine; a real blade must set its own.
   networking.hostId = lib.mkDefault "0a5e2e21";
 
+  # The 26.11 default, and what nixpkgs warns you to take early. It is a
+  # deployment decision, so the profiles leave it alone — but a reference
+  # system has to answer it to build without that warning, and the safe
+  # answer is the one that keeps the hostId guard.
+  boot.zfs.forceImportRoot = lib.mkDefault false;
+
   # Matches what the sd-image installer lays down.
   fileSystems = {
     "/" = {

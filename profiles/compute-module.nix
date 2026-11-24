@@ -26,6 +26,10 @@
 #   * 16K pages on CM5 (`raspberry-pi-5.page-size-16k`): a different kernel
 #     build, so importing it is an hour of compiling and a cache miss. Import
 #     it yourself if you want it, and expect to build.
+#   * `boot.zfs.forceImportRoot`, which is deployment policy rather than a
+#     property of the blade — and which nixpkgs already keys off
+#     `system.stateVersion`, so a profile restating it would only override a
+#     considered default and collide with any fleet module that sets it
 #   * filesystems, users, and the rest of the machine — profiles describe the
 #     blade, not the deployment.
 {
@@ -86,12 +90,23 @@ in
   # The kernel module is built against the kernel above, so a cached kernel
   # (with its `dev` output, which is what the module build consumes) is the
   # difference between a minute and an hour here.
-  boot.supportedFilesystems.zfs = zfs;
+  boot.supportedFilesystems.zfs = lib.mkIf zfs true;
 
-  # The 26.11 default, taken early: forcing an import ignores the hostId
-  # guard that stops two machines mounting the same pool. Blades that boot
-  # from a pool another blade may have left dirty can set it back to true.
-  boot.zfs.forceImportRoot = lib.mkIf zfs (lib.mkDefault false);
+  # Both halves of ZFS, from this flake's package set.
+  #
+  # NixOS builds the kernel module as
+  # `boot.kernelPackages.${boot.zfs.package.kernelModuleAttribute}` and then
+  # asserts that its version equals `boot.zfs.package.version`. The module
+  # half therefore follows `boot.kernelPackages` above and comes from here;
+  # leaving the userspace half at its default would take it from the importing
+  # configuration's nixpkgs instead. Two nixpkgs that merely disagree by an
+  # OpenZFS point release then fail that assertion — and a blade that pins its
+  # system to a channel of its own is the normal case, not the exotic one.
+  #
+  # This is also the package the `zfs` bundle alias was selected against (see
+  # `supportsZfs` in overlays/linux-and-firmware.nix), so pinning it here is
+  # what makes that selection mean anything.
+  boot.zfs.package = lib.mkIf zfs (lib.mkOverride 900 rpi.zfs);
 
   system.nixos.tags = [
     "cm${variant}"

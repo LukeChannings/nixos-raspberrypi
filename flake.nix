@@ -186,6 +186,13 @@
                   # NetworkManager, so keep the installer module's intent.
                   networking.wireless.enable = lib.mkForce false;
 
+                  # Stated rather than defaulted, which is what silences
+                  # nixpkgs' warning. An installer is the one place the unsafe
+                  # answer is the right one: it exists to adopt a pool some
+                  # other machine last touched, often after the crash that is
+                  # the reason you booted it.
+                  boot.zfs.forceImportRoot = true;
+
                   imports = [
                     nixosModules."raspberry-pi-${variant}".base
                   ];
