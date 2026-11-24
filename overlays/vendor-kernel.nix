@@ -90,6 +90,14 @@ let
               # per-process virtual address space, too small for the up-front
               # reservations LMDB and the GHC RTS make.
               ARM64_VA_BITS_48 = yes;
+
+              # Intel's discrete-GPU driver. Nothing in bcm2711_defconfig asks
+              # for it; nixpkgs' autoModules builds it because a 4K-page arm64
+              # kernel satisfies its PAGE_SIZE_4KB dependency (bcm2712 runs 16K
+              # pages, so the Pi 5 kernel never sees it). rpi-7.2.y at 7.2.12
+              # ships a half-applied i915 display refactor that fails to
+              # compile there, and no Pi has a use for the driver anyway.
+              DRM_XE = no;
             };
           };
 
