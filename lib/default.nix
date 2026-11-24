@@ -55,19 +55,17 @@ let
 
       # NOTE: Not sure how long these two will be provided as a part of public
       # interface, please consider using `nixosSystem` or `nixosSystemFull`
-      inject-overlays =
-        { ... }:
-        {
-          nixpkgs.overlays = [
-            self.overlays.bootloader
+      inject-overlays = _: {
+        nixpkgs.overlays = [
+          self.overlays.bootloader
 
-            self.overlays.vendor-kernel
-            self.overlays.vendor-firmware
-            self.overlays.kernel-and-firmware
+          self.overlays.vendor-kernel
+          self.overlays.vendor-firmware
+          self.overlays.kernel-and-firmware
 
-            self.overlays.vendor-pkgs
-          ];
-        };
+          self.overlays.vendor-pkgs
+        ];
+      };
       inject-overlays-global =
         { lib, ... }:
         {
