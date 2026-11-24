@@ -69,6 +69,30 @@ let
             ++ pkgs.lib.optional (
               pkgs.kernelPatches ? tools_128bit_types && pkgs.lib.versionOlder source.modDirVersion "7.3"
             ) tools_128bit_types;
+
+          # The Compute Blade's agent mmaps /dev/mem to reach the GPIO and PWM
+          # peripheral registers that drive the fan and the edge LEDs; both
+          # vendor defconfigs leave the restrictions off for exactly that kind
+          # of bare-metal access. nixpkgs' common-config.nix turns them back on
+          # for every kernel it builds, so say it again here — in the kernel
+          # this repo publishes, rather than in each consumer, where it would
+          # cost a from-source rebuild of a kernel the cache already holds.
+          structuredExtraConfig = with pkgs.lib.kernel; {
+            STRICT_DEVMEM = no;
+            IO_STRICT_DEVMEM = no;
+          };
+
+          # Per-defconfig, keyed the way pkgs/linux-rpi/package.nix reads it:
+          # <defconfig base>.<arch>.
+          fixupStructuredConfig = with pkgs.lib.kernel; {
+            bcm2711.aarch64 = {
+              # bcm2711_defconfig ships ARM64_VA_BITS_39 — a 512 GiB
+              # per-process virtual address space, too small for the up-front
+              # reservations LMDB and the GHC RTS make.
+              ARM64_VA_BITS_48 = yes;
+            };
+          };
+
           inherit rpiModel;
         }
         source
